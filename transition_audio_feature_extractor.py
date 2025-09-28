@@ -5,8 +5,6 @@ import pandas as pd
 from pdb import set_trace as bp
 
 import opensmile
-from transformers import AutoProcessor, AutoModel
-import torch
 import librosa
 
 from pathlib import Path  
@@ -35,7 +33,6 @@ args = parser.parse_args()
 FOLDER_NAME = args.folders
 WINDOW_MS = args.window_ms                              # Time before/after transition
 FEAT_MAPS = args.feat_sets
-device = torch.device('cuda' if torch.cuda.is_available else 'cpu')
 
 SAVE_CSV=0
 SAVE_PICKLE=1
