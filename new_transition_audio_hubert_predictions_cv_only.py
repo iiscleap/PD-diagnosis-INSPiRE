@@ -452,4 +452,4 @@ if __name__ == "__main__":
 
             
         print(FEATURE_MAP, repr(results_dict))
-        logger.info(f"{FEATURE_MAP} with new onsets={NEW_ONSETS}, transition window {WINDOW_MS}ms: {repr(results_dict)}")
+        logger.info(f"{FEATURE_MAP}, transition window {WINDOW_MS}ms: {repr(results_dict)}")

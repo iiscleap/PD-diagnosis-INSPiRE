@@ -28,7 +28,7 @@ parser.add_argument("--window_ms", type=int, required=True, help="Window size be
 parser.add_argument('--folders', type=list_of_strings, required=True, help="Names of folders inside the input directory separated by comma(,)")
 parser.add_argument('--feat_sets', type=list_of_strings, required=True, help="Features to be extracted from the given audios separated by comma(,). Options avaialble: egemaps, gemaps, compare, mel-spectrogram, mfcc")
 parser.add_argument("--use_transition_audios", type=int, required=True, help="Do you want to use transition audios or full audios? Enter 0 for full audios and 1 for transtion audios")
-parser.add_argument('--device', type=bool, help="What device do you want to run the hubert model on? Options: cpu or cuda")
+parser.add_argument('--device', type=str, help="What device do you want to use to run the hubert model? Options: cpu or cuda")
 
 args = parser.parse_args()
 
