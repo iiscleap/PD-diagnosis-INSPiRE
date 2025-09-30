@@ -55,6 +55,8 @@ parser.add_argument("--meta_dir", type=str, required=True, help="Complete path t
 parser.add_argument('--folders', type=list_of_strings, required=True, help="Names of folders inside the input directory separated by comma(,)")
 parser.add_argument('--feat_sets', type=list_of_strings, required=True, help="Features to be extracted from the given audios separated by comma(,). Options avaialble: egemaps, gemaps, compare, mel-spectrogram, mfcc")
 parser.add_argument('--with_meta', type=bool, help="Do you want to concatenate the metadata with the features? Options: 0 or 1")
+parser.add_argument("--use_transition_audios", type=int, required=True, help="Do you want to use transition audios or full audios? Enter 0 for full audios and 1 for transtion audios")
+parser.add_argument("--window_ms", type=int, required=False, help="Window size before and after the transition detected (in ms).")
 args = parser.parse_args()
 
 log_file_path = args.log_path
@@ -70,6 +72,8 @@ logger.setLevel(logging.INFO)
 FEATURE_NAMES = args.folders
 FEATURE_MAPS = args.feat_sets
 WITH_META=0
+TRANSITION_AUDIOS=args.use_transition_audios
+WINDOW_MS=args.window_ms
 
 
 ### PCA
@@ -169,7 +173,11 @@ def metrics_display(mdl, X_complete, y_complete, model_name, feat_name, feat_map
     results_dict[feat_name]['mean_f1_score'].append(scores['mean_test_f1_macro'][best_result_index])
     results_dict[feat_name]['std_f1_score'].append(scores['std_test_f1_macro'][best_result_index])
     results_dict[feat_name]['method'].append(feat_name)
-    results_dict[feat_name]['transition_window_size'].append("full_audio")
+
+    if TRANSITION_AUDIOS==1:
+        results_dict[feat_name]['transition_window_size'].append(WINDOW_MS)
+    elif TRANSITION_AUDIOS==0:
+        results_dict[feat_name]['transition_window_size'].append("full_audio")
 
     
     logger.info(f"\nAvailable score: {sorted(scores.keys())}")
@@ -250,16 +258,24 @@ if __name__ == "__main__":
     for FEATURE_NAME in FEATURE_NAMES:
         for FEATURE_MAP in FEATURE_MAPS: 
             if FEATURE_MAP in ['egemaps', 'gemaps', 'compare']:
-                data_path = os.path.join(args.input_dir, f"\\16kcomplete_opensmile_features_{FEATURE_NAME}_features_{FEATURE_MAP}.csv")
+                if TRANSITION_AUDIOS==1:
+                    data_path = os.path.join(args.input_dir, f"transition_opensmile_features_{WINDOW_MS}ms_{FEATURE_NAME}_features_{FEATURE_MAP}.csv")
+                elif TRANSITION_AUDIOS==0:
+                    data_path = os.path.join(args.input_dir, f"16kcomplete_opensmile_features_{FEATURE_NAME}_features_{FEATURE_MAP}.csv")
                 data = pd.read_csv(data_path).drop('Unnamed: 0', axis=1)
             elif FEATURE_MAP in ['mel-spectrogram', 'mfcc']:
-                data_path = os.path.join(args.input_dir, f"\\16kcomplete_opensmile_features_{FEATURE_NAME}_features_{FEATURE_MAP}.pkl")
+                if TRANSITION_AUDIOS==1:
+                    data_path = os.path.join(args.input_dir, f"transition_opensmile_features_{WINDOW_MS}ms_{FEATURE_NAME}_features_{FEATURE_MAP}.pkl")
+                elif TRANSITION_AUDIOS==0:
+                    data_path = os.path.join(args.input_dir, f"16kcomplete_opensmile_features_{FEATURE_NAME}_features_{FEATURE_MAP}.pkl")
                 data = pd.read_pickle(data_path)
 
             meta_path = os.path.join(args.meta_dir)
 
-
-            logger.info(f"\nExperiment with {FEATURE_NAME} and {FEATURE_MAP}\n")
+            if TRANSITION_AUDIOS==1:
+                logger.info(f"\nExperiment with {FEATURE_NAME} and {FEATURE_MAP} for transition audios with window size {WINDOW_MS}\n")
+            elif TRANSITION_AUDIOS==0:
+                logger.info(f"\nExperiment with {FEATURE_NAME} and {FEATURE_MAP} for full audios\n")
 
             data['file'] = data['file'].str.split('_', expand=True)[0]
             data.rename(columns={'file':'id'}, inplace=True)

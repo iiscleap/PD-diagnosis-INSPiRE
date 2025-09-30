@@ -25,9 +25,9 @@ Parent_folder/
 
 ### Scripts and Their Functionality
 
-1. **`audio_silence_extarctor.py`**
+1. **`audio_silence_extractor.py`**
    - **Description**: Extracts audio from videos, resamples to 16kHz, and removes beginning and trailing silences (defined as audio with amplitude < 0.1% of the maximum amplitude).
-   - **Usage**: Run `python audio_silence_extarctor.py --help` to view available options.
+   - **Usage**: Run `python audio_silence_extractor.py --help` to view available options.
 
 2. **`transition_extractor.py`**
    - **Description**: Extracts transition segments from audio files using a window size of `2*window_size` (specified in options). Processed audios are saved to `output_dir/all_combined_wavs`.
@@ -45,13 +45,13 @@ Parent_folder/
    - **Description**: Extracts HuBERT features for either full or transition audios, determined by the `use_transition_audios` flag (`1` for transition audios, `0` for full audios).
    - **Usage**: Run `python hubert_audio_feature_extractor.py --help` to view available options.
 
-6. **`traditional_full_audio_predictions.py`**
-   - **Description**: Generates predictions using traditional signal processing features for full audio files.
-   - **Usage**: Run `python traditional_full_audio_predictions.py --help` to view available options.
+6. **`traditional_feat_predictions.py`**
+   - **Description**: Generates predictions using traditional signal processing features either full or transition audios, determined by the `use_transition_audios` flag (`1` for transition audios, `0` for full audios).
+   - **Usage**: Run `python traditional_feat_predictions.py --help` to view available options.
 
-7. **`hubert_transition_audio_predictions.py`**
-   - **Description**: Generates predictions using HuBERT features for transition audio segments.
-   - **Usage**: Run `python hubert_transition_audio_predictions.py --help` to view available options.
+7. **`hubert_feat_predictions.py`**
+   - **Description**: Generates predictions using HuBERT features for either full or transition audios, determined by the `use_transition_audios` flag (`1` for transition audios, `0` for full audios).
+   - **Usage**: Run `python hubert_feat_predictions.py --help` to view available options.
 
 ---
 
@@ -85,7 +85,7 @@ python audio_silence_extarctor.py --help
 ## Notes
 
 - Ensure that input audio files are in `.wav` format (taken care of if using the audio_silence_extarctor.py script) and organized as per the folder structure described above.
-- device flag can be used to mention what device to use (GPU or CPU) for the HuBERT model where required.
+- device flag can be used to mention what device to use (GPU or CPU) for the HuBERT model if/where required.
 - Some dataset specific changes might have to be made when using a different dataset based on the naming convention of the files.
 
 ---

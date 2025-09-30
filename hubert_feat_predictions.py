@@ -59,7 +59,7 @@ def list_of_strings(arg):
 # --- Parameters ---
 print(f"Initializing parameters")
 parser = argparse.ArgumentParser(description="Predict Parkinson's disease status using baseline features and gridsearch")
-parser.add_argument("--log_path", type=str, required=True, help="Path to save the log file at")
+parser.add_argument("--log_path", type=str, required=True, help="Path to save the log file at along with the file name (example.out)")
 parser.add_argument("--window_ms", type=int, required=True, help="Window size before and after the transition detected (in ms).")
 parser.add_argument("--embeddings_dir", type=str, required=True, help="Complete path to the full audio samples")
 parser.add_argument("--output_dir", type=str, required=True, help="Complete path to the output directory")
@@ -67,7 +67,8 @@ parser.add_argument("--meta_dir", type=str, required=True, help="Complete path t
 parser.add_argument('--folders', type=list_of_strings, required=True, help="Names of folders inside the input directory separated by comma(,)")
 parser.add_argument('--feat_sets', type=list_of_strings, required=True, help="Features to be extracted from the given audios separated by comma(,). Options avaialble: hubert_base, hubert_large_pretrained, hubert_large_finetuned, hubert_xlarge_pretrained, hubert_xlarge_finetuned")
 parser.add_argument('--with_meta', type=bool, help="Do you want to concatenate the metadata with the features? Options: 0 or 1")
-parser.add_argument('--device', type=bool, help="What device do you want to run the hubert model on? Options: cpu or cuda")
+parser.add_argument("--use_transition_audios", type=int, required=True, help="Do you want to use transition audios or full audios? Enter 0 for full audios and 1 for transtion audios")
+parser.add_argument("--window_ms", type=int, required=False, help="Window size before and after the transition detected (in ms).")
 args = parser.parse_args()
 
 log_file_path = args.log_path
@@ -84,8 +85,10 @@ FEATURE_NAMES = args.folders
 FEATURE_MAPS = args.feat_sets
 WITH_META=args.with_meta
 NEW_ONSETS=0
+TRANSITION_AUDIOS=args.use_transition_audios
+WINDOW_MS=args.window_ms
 
-device = torch.device(args.device)
+device = torch.device('cpu')
 
 
 ### PCA
@@ -180,7 +183,11 @@ def metrics_display(mdl, X_complete, y_complete, model_name, feat_name, feat_map
     results_dict[feat_name]['mean_f1_score'].append(scores['mean_test_f1_macro'][best_result_index])
     results_dict[feat_name]['std_f1_score'].append(scores['std_test_f1_macro'][best_result_index])
     results_dict[feat_name]['method'].append(feat_name)
-    results_dict[feat_name]['transition_window_size'].append(WINDOW_MS)
+    
+    if TRANSITION_AUDIOS==1:
+        results_dict[feat_name]['transition_window_size'].append(WINDOW_MS)
+    elif TRANSITION_AUDIOS==0:
+        results_dict[feat_name]['transition_window_size'].append("full_audio")
 
     logger.info(f"\nAvailable score: {sorted(scores.keys())}\n")
     logger.info(f"The combination of hyperparameters giving the best accuracy is {grid.best_params_} with an accuracy of {grid.best_score_}\n")
@@ -219,8 +226,10 @@ class HubertEmbeddingDataset(Dataset):
         if self.feat_map != "hubert_base":
             embed_path = os.path.join(self.embed_dir, f"{self.feat_map}_16k_full_features_{aud_name}_{self.folder_name}_features_{self.feat_map}.csv")
         elif self.feat_map == "hubert_base":
-
-            embed_path = os.path.join(self.embed_dir, f"hubert_16k_transition_{WINDOW_MS}ms_{aud_name}_{self.folder_name}_features_hubert.csv")
+            if TRANSITION_AUDIOS==1:
+                embed_path = os.path.join(self.embed_dir, f"hubert_16k_transition_{WINDOW_MS}ms_{aud_name}_{self.folder_name}_features_hubert.csv")
+            elif TRANSITION_AUDIOS==0:
+                embed_path = os.path.join(self.embed_dir, f"hubert_16k_full_audio_features_{aud_name}_{self.folder_name}_features_hubert.csv")
             
         try:
             with open(embed_path, "rb") as fp:
@@ -273,7 +282,10 @@ def filter_vid_names(emb_path, meta_series, feat_map):
                         uuid_counts[uuid] += 1
                     elif feat_map == "hubert_base":
                         if not NEW_ONSETS:
-                            uuid = parts[4]
+                            if TRANSITION_AUDIOS==1:
+                                uuid = parts[4]
+                            elif TRANSITION_AUDIOS==0:
+                                uuid = parts[5]
                             uuid_counts[uuid] += 1
                         elif NEW_ONSETS:
                             uuid = parts[1]
@@ -288,7 +300,10 @@ def filter_vid_names(emb_path, meta_series, feat_map):
                     uuid_counts[uuid] += 1
                 elif feat_map == "hubert_base":
                     if not NEW_ONSETS:
-                        uuid = parts[4]
+                        if TRANSITION_AUDIOS==1:
+                            uuid = parts[4]
+                        elif TRANSITION_AUDIOS==0:
+                            uuid = parts[5]
                         uuid_counts[uuid] += 1
                     elif NEW_ONSETS:
                         uuid = parts[1]
@@ -296,7 +311,7 @@ def filter_vid_names(emb_path, meta_series, feat_map):
             except IndexError:
                 continue
 
-    valid_uuids = [uuid for uuid, count in uuid_counts.items() if count == 5]
+    valid_uuids = [uuid for uuid, count in uuid_counts.items() if count == 5] # Select the audios for which all 5 speaking tasks' features available (chnage the 5 to the number of folders (number of speaking tasks))
     return meta_series[meta_series.index.isin(valid_uuids)]
 
 
@@ -316,7 +331,10 @@ if __name__ == "__main__":
             max_layers = 13
 
         for LAYER_NO in range(0,max_layers):
-            logger.info(f"\Predictions with hubert embeddings of 16kHz sampled audios with transition videos with window size {WINDOW_MS} with {FEATURE_MAP} layer {LAYER_NO} with CV and GRIDSEARCHCV\n")
+            if TRANSITION_AUDIOS==1:
+                logger.info(f"\Predictions with hubert embeddings of 16kHz sampled audios with transition videos with window size {WINDOW_MS} for {FEATURE_MAP} layer {LAYER_NO} with CV and GRIDSEARCHCV\n")
+            elif TRANSITION_AUDIOS==0:
+                logger.info(f"\Predictions with hubert embeddings of 16kHz sampled audios with transition videos with full audios for {FEATURE_MAP} layer {LAYER_NO} with CV and GRIDSEARCHCV\n")
 
             for FEATURE_NAME in FEATURE_NAMES:
                 if FEATURE_MAP != "hubert_base":
@@ -450,6 +468,9 @@ if __name__ == "__main__":
 
                 results_dict = metrics_display(rf_model, X, y, "Random Forest Classifier", FEATURE_NAME, FEATURE_MAP, params=rf_params, results_dict=results_dict, layer_no=LAYER_NO)
 
-            
-        print(FEATURE_MAP, repr(results_dict))
-        logger.info(f"{FEATURE_MAP}, transition window {WINDOW_MS}ms: {repr(results_dict)}")
+        if TRANSITION_AUDIOS==1:
+            print(f"{FEATURE_MAP}, transition window {WINDOW_MS}ms: {repr(results_dict)}")
+            logger.info(f"{FEATURE_MAP}, transition window {WINDOW_MS}ms: {repr(results_dict)}")
+        elif TRANSITION_AUDIOS==0:
+            print(f"{FEATURE_MAP} for full audios: {repr(results_dict)}")
+            logger.info(f"{FEATURE_MAP} for full audios: {repr(results_dict)}")
