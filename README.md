@@ -45,13 +45,13 @@ Parent_folder/
    - **Description**: Extracts HuBERT features for either full or transition audios, determined by the `use_transition_audios` flag (`1` for transition audios, `0` for full audios).
    - **Usage**: Run `python hubert_audio_feature_extractor.py --help` to view available options.
 
-6. **`new_audio_baseline_predictions_gridsearch.py`**
+6. **`traditional_full_audio_predictions.py`**
    - **Description**: Generates predictions using traditional signal processing features for full audio files.
-   - **Usage**: Run `python new_audio_baseline_predictions_gridsearch.py --help` to view available options.
+   - **Usage**: Run `python traditional_full_audio_predictions.py --help` to view available options.
 
-7. **`new_transition_audio_hubert_predictions_cv_only.py`**
+7. **`hubert_transition_audio_predictions.py`**
    - **Description**: Generates predictions using HuBERT features for transition audio segments.
-   - **Usage**: Run `python new_transition_audio_hubert_predictions_cv_only.py --help` to view available options.
+   - **Usage**: Run `python hubert_transition_audio_predictions.py --help` to view available options.
 
 ---
 
