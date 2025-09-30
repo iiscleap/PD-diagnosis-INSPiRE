@@ -55,8 +55,6 @@ Parent_folder/
 
 ---
 
----
-
 ## Getting Started
 
 ### 1. Clone the Repository
@@ -79,12 +77,12 @@ pip install -r requirements.txt
 Each script can be executed with specific options. Use the `--help` flag to view available options for each script. Example:
 
 ```bash
-python audio_silence_extarctor.py --help
+python audio_silence_extractor.py --help
 ```
 
 ## Notes
 
-- Ensure that input audio files are in `.wav` format (taken care of if using the audio_silence_extarctor.py script) and organized as per the folder structure described above.
+- Ensure that input audio files are in `.wav` format (taken care of if using the audio_silence_extractor.py script) and organized as per the folder structure described above.
 - device flag can be used to mention what device to use (GPU or CPU) for the HuBERT model if/where required.
 - Some dataset specific changes might have to be made when using a different dataset based on the naming convention of the files.
 
